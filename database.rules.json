@@ -16,6 +16,7 @@
     },
     "results": {
       ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'johnrobertaycocho785@gmail.com'",
       "$round": {
         "$uid": {
           ".write": "auth != null && auth.uid === $uid && !data.exists()",

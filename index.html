@@ -128,8 +128,9 @@ tr.me td { color: var(--accent); font-weight: 600; }
         </div>
       </div>
       <div class="panel col">
-        <h2 id="peerHead">In the room</h2>
+        <h2 id="peerHead">Lobby</h2>
         <ul class="peers" id="peers"></ul>
+        <p class="note" id="peerNote" style="margin:10px 0 0"></p>
       </div>
     </div>
 
@@ -151,6 +152,10 @@ tr.me td { color: var(--accent); font-weight: 600; }
         <button type="button" data-tab="best" aria-pressed="false">All-time best</button>
       </div>
       <div class="boardwrap" id="board-lobby"></div>
+      <div class="restart" hidden style="margin-top:14px">
+        <button type="button" class="ghost">Restart leaderboard</button>
+        <div class="err" role="alert"></div>
+      </div>
     </div>
 
     <div id="hostLoginBox" hidden>
@@ -216,6 +221,10 @@ tr.me td { color: var(--accent); font-weight: 600; }
         <button type="button" data-tab="best" aria-pressed="false">All-time best</button>
       </div>
       <div class="boardwrap" id="board-done"></div>
+      <div class="restart" hidden style="margin-top:14px">
+        <button type="button" class="ghost">Restart leaderboard</button>
+        <div class="err" role="alert"></div>
+      </div>
     </div>
     <p class="note">Waiting for the host to start another round.</p>
   </section>
@@ -230,11 +239,13 @@ tr.me td { color: var(--accent); font-weight: 600; }
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC8NxpAvqSBC3v2Iax4F2FhvuEVagsPu3M",
   authDomain: "senditce.firebaseapp.com",
+  // Check this against Realtime Database > Data in the console; a database outside the US shows a different address.
+  databaseURL: "https://senditce-default-rtdb.firebaseio.com",
   projectId: "senditce",
   storageBucket: "senditce.firebasestorage.app",
   messagingSenderId: "913924713064",
   appId: "1:913924713064:web:addf8ee5c5a6b933b069dd",
-  measurementId: "G-H1866BGD82"
+  measurementId: "G-H1866BGD82",
 };
 const LEAD_MS = 5000;
 const STALE_MS = 20 * 60 * 1000;
@@ -357,16 +368,22 @@ function renderPeers() {
   const list = $("peers");
   list.textContent = "";
   const ps = peers.length ? peers : [{ id: uid, name: name || "You", ready }];
-  let rc = 0;
-  ps.forEach((p) => {
-    if (p.ready) rc++;
+  const lobby = ps.filter((p) => p.ready);   // pressing "I'm ready" is what puts you in the lobby
+  lobby.forEach((p) => {
     const li = document.createElement("li");
     const n = document.createElement("span"); n.className = "nm";
     n.textContent = String(p.name || "Anonymous").slice(0, 40) + (p.id === uid ? " (you)" : "");
-    const b = document.createElement("span"); b.className = "pill" + (p.ready ? " on" : ""); b.textContent = p.ready ? "Ready" : "Not ready";
+    const b = document.createElement("span"); b.className = "pill on"; b.textContent = "Ready";
     li.append(n, b); list.append(li);
   });
-  $("peerHead").textContent = "In the room · " + rc + " of " + ps.length + " ready";
+  if (!lobby.length) {
+    const li = document.createElement("li"); li.className = "muted";
+    li.textContent = "Nobody is ready yet. Press \"I'm ready\" to join the lobby.";
+    list.append(li);
+  }
+  $("peerHead").textContent = "Lobby · " + lobby.length + " ready";
+  const waiting = ps.length - lobby.length;
+  $("peerNote").textContent = waiting ? waiting + " more online, not ready yet" : "";
 }
 
 // ---- leaderboard ----
@@ -445,6 +462,16 @@ $("resetBtn").addEventListener("click", () => {
   rtdb.ref("control").set({ round: (control && control.round) || 0, status: "idle", startAt: 0 }).catch(() => {});
 });
 $("outBtn").addEventListener("click", () => auth.signOut().then(() => location.reload()));
+// Restart: wipe every logged time and send everyone back to the lobby. Only the signed-in host account is allowed by the rules.
+document.querySelectorAll(".restart").forEach((box) => box.querySelector("button").addEventListener("click", async () => {
+  const err = box.querySelector(".err");
+  err.textContent = "";
+  if (!confirm("Delete every logged time and return everyone to the lobby?")) return;
+  try {
+    await rtdb.ref("results").remove();
+    await rtdb.ref("control").set({ round: (control && control.round) || 0, status: "idle", startAt: 0 });
+  } catch (x) { err.textContent = "Could not restart (" + (x.code || "error") + ")."; }
+}));
 $("hostLoginToggle").addEventListener("click", () => { $("hostLoginForm").hidden = !$("hostLoginForm").hidden; });
 $("hostGo").addEventListener("click", async () => {
   try {
@@ -468,6 +495,7 @@ function connect(user) {
   uid = user.uid;
   isHost = !user.isAnonymous;
   $("hostPanel").hidden = !isHost;
+  document.querySelectorAll(".restart").forEach((b) => { b.hidden = !isHost; });
   $("hostLoginBox").hidden = isHost;
   rtdb.ref(".info/serverTimeOffset").on("value", (s) => { offset = s.val() || 0; });
   rtdb.ref(".info/connected").on("value", (s) => {
