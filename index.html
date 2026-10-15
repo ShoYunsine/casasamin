@@ -183,7 +183,7 @@ tr.me td { color: var(--accent); font-weight: 600; }
 
   <!-- FORM -->
   <section id="s-form" hidden>
-    <div class="clock"><span class="eyebrow">Go. Fill it in and claim</span><span class="t" id="liveTime">0.00s</span></div>
+    <div class="clock"><span class="eyebrow">Go. Fill it in and submit.</span><span class="t" id="liveTime">0.00s</span></div>
     <div class="screen">
       <form class="formcard" id="form" novalidate>
         <div style="text-align:center">
@@ -404,13 +404,14 @@ function renderBoard(where) {
   }
   const t = document.createElement("table");
   const hd = t.createTHead().insertRow();
-  ["#", "Name", "Time"].forEach((h) => { const th = document.createElement("th"); th.textContent = h; hd.append(th); });
+  ["#", "Name", "Chose", "Time"].forEach((h) => { const th = document.createElement("th"); th.textContent = h; hd.append(th); });
   const tb = t.createTBody();
   rows.forEach((r, i) => {
     const tr = tb.insertRow();
     if (r.uid === uid) tr.className = "me";
     tr.insertCell().textContent = i + 1;
     tr.insertCell().textContent = String(r.name || "Anonymous").slice(0, 40);
+    tr.insertCell().textContent = String(r.option || "No choice recorded").slice(0, 120);
     const c = tr.insertCell(); c.className = "t"; c.textContent = fmt(r.ms);
   });
   host.append(t);
@@ -511,7 +512,7 @@ function connect(user) {
   rtdb.ref("results").on("value", (s) => {
     results = [];
     Object.entries(s.val() || {}).forEach(([round, byUid]) => Object.entries(byUid).forEach(([u, r]) => {
-      if (r && typeof r.ms === "number") results.push({ round: Number(round), uid: u, name: r.name, ms: r.ms });
+      if (r && typeof r.ms === "number") results.push({ round: Number(round), uid: u, name: r.name, ms: r.ms, option: r.option });
     }));
     if (control && curRound === control.round && results.some((r) => r.round === curRound && r.uid === uid)) submitted = true;
     renderAll();
