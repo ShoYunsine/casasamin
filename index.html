@@ -107,8 +107,13 @@ tr.me td { color: var(--accent); font-weight: 600; }
 <div class="practice">PRACTICE FORM · nothing you enter here is sent to any real registration</div>
 <div class="wrap">
 
+  <!-- LOADING: shown until the first round status arrives, so a page refresh does not flash the lobby -->
+  <section class="screen" id="s-load">
+    <div class="count"><div class="eyebrow">Loading…</div></div>
+  </section>
+
   <!-- LOBBY -->
-  <section class="screen" id="s-lobby">
+  <section class="screen" id="s-lobby" hidden>
     <div>
       <div class="eyebrow">Form Sprint</div>
       <h1>Ready up. When the host starts, everyone gets the form at the same instant.</h1>
@@ -135,19 +140,6 @@ tr.me td { color: var(--accent); font-weight: 600; }
       </div>
     </div>
 
-    <div class="panel" id="hostPanel" hidden>
-      <h2>Host controls</h2>
-      <p class="muted" style="margin:6px 0 14px">Starts a 5-second countdown for everyone in the room.</p>
-      <div class="row" style="margin-bottom:12px">
-        <div class="grow"><input type="text" id="roundPw" autocomplete="off" aria-label="Form password for this round" placeholder="Form password (leave empty for none)" value="sprint"></div>
-      </div>
-      <div class="row">
-        <button id="startBtn">Start countdown</button>
-        <button id="resetBtn" class="ghost">Back to lobby</button>
-        <button id="outBtn" class="ghost">Sign out host</button>
-      </div>
-      <div class="err" id="hostErr" role="alert"></div>
-    </div>
 
     <div class="panel col" id="lobbyBoardPanel">
       <h2 style="margin-bottom:12px">Leaderboard</h2>
@@ -208,7 +200,7 @@ tr.me td { color: var(--accent); font-weight: 600; }
 
   <!-- FORM -->
   <section id="s-form" hidden>
-    <div class="clock"><span class="eyebrow">Go. Fill it in and submit.</span><span class="t" id="liveTime">0.00s</span></div>
+    <div class="clock"><span class="eyebrow">Go. Fill it in and complete.</span><span class="t" id="liveTime">0.00s</span></div>
     <div class="screen">
       <form class="formcard" id="form" novalidate>
         <div style="text-align:center">
@@ -254,6 +246,21 @@ tr.me td { color: var(--accent); font-weight: 600; }
     </div>
     <p class="note">Waiting for the host to start another round.</p>
   </section>
+
+  <!-- HOST CONTROLS: outside the screens so the host keeps them in the lobby and on the results screen -->
+  <div class="panel" id="hostPanel" hidden style="margin-top:20px">
+    <h2>Host controls</h2>
+    <p class="muted" style="margin:6px 0 14px">Starts a 5-second countdown for everyone in the room.</p>
+    <div class="row" style="margin-bottom:12px">
+      <div class="grow"><input type="text" id="roundPw" autocomplete="off" aria-label="Form password for this round" placeholder="Form password (leave empty for none)" value="sprint"></div>
+    </div>
+    <div class="row">
+      <button id="startBtn">Start countdown</button>
+      <button id="resetBtn" class="ghost">Back to lobby</button>
+      <button id="outBtn" class="ghost">Sign out host</button>
+    </div>
+    <div class="err" id="hostErr" role="alert"></div>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -312,7 +319,12 @@ let results = [];          // [{round, uid, name, ms}]
 let peers = [];            // [{id, name, ready}]
 let ready = false;
 let name = store.get("fs-name");
-let curRound = null, submitted = false, unlocked = false, shown = "";
+let curRound = null, submitted = false, unlocked = false, controlReady = false, shown = "load";
+// The unlock survives the real page reload that follows a correct password.
+const unlockStore = {
+  get() { try { return sessionStorage.getItem("fs-unlocked"); } catch (e) { return null; } },
+  set(v) { try { sessionStorage.setItem("fs-unlocked", v); } catch (e) {} },
+};
 const tabs = { lobby: "round", done: "round" };
 const now = () => Date.now() + offset;   // server-corrected clock
 
@@ -356,21 +368,26 @@ function resetForm() {
 function show(which) {
   if (which === shown) return;
   shown = which;
-  ["lobby", "count", "gate", "form", "done"].forEach((k) => { $("s-" + k).hidden = k !== which; });
+  ["load", "lobby", "count", "gate", "form", "done"].forEach((k) => { $("s-" + k).hidden = k !== which; });
+  syncHostPanel();
   if (which === "gate") $("gatePw").focus({ preventScroll: true });
   if (which === "form") $("email").focus({ preventScroll: true });
   window.scrollTo(0, 0);
+}
+function syncHostPanel() {
+  $("hostPanel").hidden = !(isHost && (shown === "lobby" || shown === "done"));
 }
 function running() {
   return control && control.status === "running" && now() < control.startAt + STALE_MS;
 }
 function tick() {
+  if (!controlReady) { show("load"); return; }
   if (!running()) { show("lobby"); return; }
   if (control.round !== curRound) {
     curRound = control.round;
     submitted = results.some((r) => r.round === curRound && r.uid === uid);
     resetForm();
-    unlocked = !control.pwHash;   // no password set by the host means no gate
+    unlocked = !control.pwHash || unlockStore.get() === String(control.round);   // no password set means no gate
     setReady(false);
   }
   const left = control.startAt - now();
@@ -502,7 +519,11 @@ $("startBtn").addEventListener("click", async () => {
 $("gateForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!running() || !control.pwHash) return;
-  if ((await sha($("gatePw").value.trim())) === control.pwHash) { unlocked = true; tick(); }
+  if ((await sha($("gatePw").value.trim())) === control.pwHash) {
+    // The real form reloads the tab after a correct password, so its speed depends on the player's connection. Do the same; the clock keeps running.
+    unlockStore.set(String(control.round));
+    location.reload();
+  }
   else { $("gateErr").textContent = "Wrong password. Try again."; $("gatePw").select(); }
 });
 $("gateEye").addEventListener("click", () => {
@@ -546,7 +567,7 @@ document.querySelectorAll(".tabs").forEach((box) => box.addEventListener("click"
 function connect(user) {
   uid = user.uid;
   isHost = !user.isAnonymous;
-  $("hostPanel").hidden = !isHost;
+  syncHostPanel();
   document.querySelectorAll(".restart").forEach((b) => { b.hidden = !isHost; });
   $("hostLoginBox").hidden = isHost;
   rtdb.ref(".info/serverTimeOffset").on("value", (s) => { offset = s.val() || 0; });
@@ -559,7 +580,7 @@ function connect(user) {
     peers = Object.entries(s.val() || {}).map(([id, v]) => ({ id, name: v.name, ready: !!v.ready }));
     renderPeers();
   });
-  rtdb.ref("control").on("value", (s) => { control = s.val(); renderAll(); tick(); });
+  rtdb.ref("control").on("value", (s) => { control = s.val(); controlReady = true; renderAll(); tick(); });
   rtdb.ref("results").on("value", (s) => {
     results = [];
     Object.entries(s.val() || {}).forEach(([round, byUid]) => Object.entries(byUid).forEach(([u, r]) => {
@@ -573,8 +594,10 @@ function connect(user) {
 buildCards();
 renderPeers(); renderAll();
 setInterval(tick, 50);
+setTimeout(() => { controlReady = true; }, 6000);   // never stay on Loading if the database is unreachable
 
 if (FIREBASE_CONFIG.apiKey.startsWith("PASTE")) {
+  controlReady = true;
   $("setupMsg").hidden = false;
 } else {
   firebase.initializeApp(FIREBASE_CONFIG);
