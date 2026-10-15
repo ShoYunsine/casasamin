@@ -130,6 +130,7 @@ tr.me td { color: var(--accent); font-weight: 600; }
         <ul class="peers" id="peers"></ul>
       </div>
     </div>
+    <div class="row"><button type="button" class="ghost" id="hostToggle" hidden>Host controls</button></div>
     <div class="panel" id="hostPanel" hidden>
       <h2>Host controls</h2>
       <p class="muted" style="margin:6px 0 14px">Enter the host password to start a 5-second countdown for everyone in the room.</p>
@@ -470,7 +471,9 @@ setInterval(tick, 50);
       isHost = await user.canEdit();
     } catch (e) {}
   }
-  $("hostPanel").hidden = !isHost || !db;
+  // The panel stays closed until a host opens it; only owner/Editor accounts get the button at all.
+  $("hostToggle").hidden = !isHost || !db;
+  $("hostToggle").addEventListener("click", () => { $("hostPanel").hidden = !$("hostPanel").hidden; });
   if (!db) $("syncNote").textContent = "Live sync is off in this view, so nothing is shared.";
   if (room) {
     room.onPeers(renderPeers);
