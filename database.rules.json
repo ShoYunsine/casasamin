@@ -4,7 +4,7 @@
     ".write": false,
     "control": {
       ".read": "auth != null",
-      ".write": "auth != null && auth.token.email === 'HOST_EMAIL_HERE'",
+      ".write": "auth != null && auth.token.email === 'johnrobertaycocho785@gmail.com'",
       ".validate": "newData.hasChildren(['round', 'status', 'startAt'])"
     },
     "presence": {
