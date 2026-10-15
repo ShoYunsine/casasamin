@@ -23,6 +23,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }  /* class rules like .screen { display: grid } would otherwise beat the hidden attribute */
 body {
   margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
   padding-block: 0 48px;
@@ -239,7 +240,6 @@ tr.me td { color: var(--accent); font-weight: 600; }
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC8NxpAvqSBC3v2Iax4F2FhvuEVagsPu3M",
   authDomain: "senditce.firebaseapp.com",
-  // Check this against Realtime Database > Data in the console; a database outside the US shows a different address.
   databaseURL: "https://senditce-default-rtdb.asia-southeast1.firebasedatabase.app/",
   projectId: "senditce",
   storageBucket: "senditce.firebasestorage.app",
