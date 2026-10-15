@@ -1,0 +1,490 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Form Sprint</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one centered column; lobby -> countdown -> form -> result, one screen visible at a time. Deliberately a single dark look (timing-board feel). */
+:root {
+  --bg: #0d1014;
+  --panel: #151a20;
+  --line: #27303a;
+  --fg: #e9edf1;
+  --muted: #8f9baa;
+  --accent: #5bc0be;
+  --accent-fg: #06201f;
+  --warn: #f0a35e;
+  --bad: #ff7a7a;
+  --display: "Chakra Petch", "Arial Narrow", sans-serif;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
+  padding-block: 0 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 980px; margin: 0 auto; }
+.practice {
+  display: flex; gap: 8px; align-items: center; justify-content: center; text-align: center;
+  background: var(--warn); color: #2a1706; font-weight: 600; font-size: 13px;
+  padding: 8px 16px; margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+}
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .01em; }
+h1 { font-size: clamp(26px, 5vw, 38px); }
+h2 { font-size: 20px; }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.screen { padding-top: 28px; display: grid; gap: 20px; }
+.cols { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+.col { min-width: 0; }
+input[type=text], input[type=email], input[type=password], textarea, select {
+  width: 100%; background: #0f1318; color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 10px 12px; font: inherit;
+}
+textarea { min-height: 130px; resize: vertical; }
+input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible, .card:has(input:focus-visible) {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+button {
+  font: 600 15px var(--body); border: 0; border-radius: 999px; padding: 11px 22px; cursor: pointer;
+  background: var(--accent); color: var(--accent-fg);
+}
+button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+label.field { display: grid; gap: 6px; font-weight: 600; }
+.req { color: var(--bad); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row > .grow { flex: 1 1 200px; min-width: 0; }
+
+/* lobby */
+.peers { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+.peers li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; }
+.peers .nm { min-width: 0; overflow-wrap: anywhere; }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; align-self: center; }
+.pill.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+
+/* countdown + timer */
+.count { text-align: center; padding: 56px 16px; }
+.count .num { font: 700 clamp(110px, 30vw, 240px)/1 var(--display); color: var(--warn); font-variant-numeric: tabular-nums; }
+.clock { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; justify-content: space-between; gap: 12px; align-items: center;
+  background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; }
+.clock .t { font: 500 26px var(--mono); color: var(--accent); }
+
+/* form */
+.formcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: clamp(16px, 4vw, 32px); display: grid; gap: 22px; }
+.cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+.card { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-content: start; border: 1px solid var(--line); border-radius: 6px; padding: 12px; cursor: pointer; background: #0f1318; }
+.card:has(input:checked) { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.card input { margin-top: 4px; accent-color: var(--accent); }
+.card .t { font-weight: 600; }
+.card .s { grid-column: 2; color: var(--muted); }
+.card .p { grid-column: 2; font-weight: 600; }
+.card select { grid-column: 2; width: auto; justify-self: start; }
+.err { color: var(--bad); font-weight: 500; min-height: 1.4em; }
+.submit { justify-self: center; font-size: 17px; padding: 14px 44px; background: #eceff3; color: #111; }
+
+/* result + board */
+.big { font: 700 clamp(48px, 13vw, 96px)/1 var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+.tabs button { padding: 6px 14px; font-size: 13px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.tabs button[aria-pressed=true] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+th, td { padding: 8px 6px; border-bottom: 1px solid var(--line); }
+td.t { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+th:last-child { text-align: right; }
+tr.me td { color: var(--accent); font-weight: 600; }
+.boardwrap { overflow-x: auto; }
+.note { font-size: 13px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .count .num { transition: transform .15s; } }
+</style>
+
+<div class="practice">PRACTICE FORM · nothing you enter here is sent to any real registration</div>
+<div class="wrap">
+
+  <!-- LOBBY -->
+  <section class="screen" id="s-lobby">
+    <div>
+      <div class="eyebrow">Form Sprint</div>
+      <h1>Ready up. When the host starts, everyone gets the form at the same instant.</h1>
+    </div>
+    <div class="cols">
+      <div class="panel col">
+        <h2>You</h2>
+        <label class="field" style="margin-top:12px" for="nick">Your name on the leaderboard
+          <input type="text" id="nick" maxlength="40" placeholder="e.g. Juan D.">
+        </label>
+        <div class="row" style="margin-top:14px">
+          <button id="readyBtn">I'm ready</button>
+          <span class="note" id="syncNote"></span>
+        </div>
+      </div>
+      <div class="panel col">
+        <h2 id="peerHead">In the room</h2>
+        <ul class="peers" id="peers"></ul>
+      </div>
+    </div>
+    <div class="panel" id="hostPanel" hidden>
+      <h2>Host controls</h2>
+      <p class="muted" style="margin:6px 0 14px">Enter the host password to start a 5-second countdown for everyone in the room.</p>
+      <div class="row">
+        <div class="grow"><input type="password" id="pw" autocomplete="off" aria-label="Host password" placeholder="Host password"></div>
+        <button id="startBtn">Start countdown</button>
+      </div>
+      <div class="err" id="hostErr" role="alert"></div>
+    </div>
+    <div class="panel col" id="lobbyBoardPanel">
+      <h2 style="margin-bottom:12px">Leaderboard</h2>
+      <div class="tabs" data-board="lobby">
+        <button type="button" data-tab="round" aria-pressed="true">This round</button>
+        <button type="button" data-tab="best" aria-pressed="false">All-time best</button>
+      </div>
+      <div class="boardwrap" id="board-lobby"></div>
+    </div>
+    <p class="note">Times run from the countdown's zero to your Submit, measured on each device's own clock. Keep your device on automatic time.</p>
+  </section>
+
+  <!-- COUNTDOWN -->
+  <section class="screen" id="s-count" hidden>
+    <div class="count">
+      <div class="eyebrow">Starting in</div>
+      <div class="num" id="countNum" aria-live="assertive">5</div>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <section id="s-form" hidden>
+    <div class="clock"><span class="eyebrow">Go. Fill it in and submit.</span><span class="t" id="liveTime">0.00</span></div>
+    <div class="screen">
+      <form class="formcard" id="form" novalidate>
+        <div style="text-align:center">
+          <h1 style="font-size:clamp(22px,4vw,30px)">ACCOMMODATION SELECTION FORM</h1>
+          <p class="muted" style="margin:8px 0 0">Practice version. Select your preferred accommodation and list who will stay with you.</p>
+        </div>
+        <label class="field" for="email">Email <span class="req">*</span>
+          <input type="email" id="email" placeholder="example@email.com" autocomplete="off" style="max-width:420px">
+        </label>
+        <label class="field" for="names">Please provide the FULL NAMES of all members who will be staying together in your chosen accommodation, including your own name. <span class="req">*</span>
+          <textarea id="names" placeholder="Enter full names of all members."></textarea>
+        </label>
+        <div>
+          <h2>ACCOMMODATION SELECTION</h2>
+          <p class="muted" style="margin:6px 0 14px">The prices displayed for each option represent the accommodation rate per student.</p>
+          <div class="cards" id="cards" role="radiogroup" aria-label="Accommodation"></div>
+        </div>
+        <div class="err" id="formErr" role="alert"></div>
+        <button class="submit" type="submit" id="submitBtn">Submit</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="s-done" hidden>
+    <div class="panel" style="text-align:center">
+      <div class="eyebrow">Your time</div>
+      <div class="big" id="myTime">0.00s</div>
+      <p class="muted" id="myRank" style="margin:8px 0 0"></p>
+      <p class="err" id="saveErr" role="alert"></p>
+    </div>
+    <div class="panel col">
+      <h2 style="margin-bottom:12px">Leaderboard</h2>
+      <div class="tabs" data-board="done">
+        <button type="button" data-tab="round" aria-pressed="true">This round</button>
+        <button type="button" data-tab="best" aria-pressed="false">All-time best</button>
+      </div>
+      <div class="boardwrap" id="board-done"></div>
+    </div>
+    <p class="note" id="waitNote">Waiting for the host to start another round.</p>
+  </section>
+</div>
+
+<script>
+// shortcut: the host password is checked in the browser against this hash, so it only keeps out casual clicks; real control comes from the db rule that only Editors/Owner can write race/control.
+const PW_HASH = "50029220a560061fbfd1b7eb0eb71524b7eb6c49861d96dd67c43d4e2083676c";
+const LEAD_MS = 5000;
+const STALE_MS = 20 * 60 * 1000;
+
+const OPTIONS = [
+  { id: "ljp4", t: "LJP Farm Resort - 4 PAX", s: "Semi-Family Room", p: 2325 },
+  { id: "ljp10", t: "LJP Farm Resort - 10 PAX", s: "Family Room", p: 2100 },
+  { id: "ljp3s", t: "LJP Farm Resort - 3 PAX", s: "Solo Room", p: 2100 },
+  { id: "ljp3c", t: "LJP Farm Resort - 3 PAX", s: "Couple Room", p: 2100 },
+  { id: "ljp2", t: "LJP Farm Resort - 2 PAX", s: "Couple Room", p: 2400 },
+  { id: "zams3s", t: "ZAMS Apartelle - 3 PAX", s: "Single Room", p: 990 },
+  { id: "zams3d", t: "ZAMS Apartelle - 3 PAX", s: "Car Drive-in Room", p: 1150 },
+  { id: "jv4", t: "Jacksonville Guesthouse - 4 PAX", s: "Room 201", p: 1650 },
+  { id: "jv2", t: "Jacksonville Guesthouse - 2 PAX", p: 2250, rooms: ["Room 202", "Room 203", "Room 204"] },
+  { id: "jv3", t: "Jacksonville Guesthouse - 3 PAX", p: 1800, rooms: ["Room 205", "Room 206", "Room 207"] },
+  { id: "cv10", t: "Casa Veronica - 10 PAX", p: 1875 },
+  { id: "cv6", t: "Casa Veronica - 6 PAX", p: 1750 },
+  { id: "crl6", t: "CRL Farm - 6 PAX", s: "Loft Unit", p: 1975 },
+  { id: "none", t: "NO ROOMMATES / NEED ROOMMATE ASSIGNMENT", s: "You will be grouped with other students who also need roommate arrangements.", p: 0 },
+];
+
+const $ = (id) => document.getElementById(id);
+const store = {
+  get(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+};
+
+let db = null, room = null, user = null;
+let uid = null, isHost = false;
+let control = null;        // {round, status, startAt}
+let results = [];          // all result docs
+let ready = false;
+let name = store.get("fs-name");
+let curRound = null;       // round the form is currently built for
+let submitted = false;
+let shown = "";
+const tabs = { lobby: "round", done: "round" };
+
+const fmt = (ms) => ms >= 60000
+  ? Math.floor(ms / 60000) + ":" + ((ms % 60000) / 1000).toFixed(2).padStart(5, "0")
+  : (ms / 1000).toFixed(2) + "s";
+const sha = async (s) => {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+};
+
+// ---- form build ----
+function buildCards() {
+  const wrap = $("cards");
+  wrap.textContent = "";
+  OPTIONS.forEach((o) => {
+    const lab = document.createElement("label");
+    lab.className = "card";
+    const r = document.createElement("input");
+    r.type = "radio"; r.name = "acc"; r.value = o.id; r.id = "acc-" + o.id;
+    const t = document.createElement("span"); t.className = "t"; t.textContent = o.t;
+    lab.append(r, t);
+    if (o.s) { const s = document.createElement("span"); s.className = "s"; s.textContent = o.s; lab.append(s); }
+    const p = document.createElement("span"); p.className = "p";
+    p.textContent = o.p ? o.p.toLocaleString("en-PH", { minimumFractionDigits: 2 }) + " PHP" : "Free";
+    lab.append(p);
+    if (o.rooms) {
+      const sel = document.createElement("select");
+      sel.id = "room-" + o.id; sel.setAttribute("aria-label", "Room for " + o.t); sel.disabled = true;
+      sel.append(new Option("Select room", ""));
+      o.rooms.forEach((rm) => sel.append(new Option(rm, rm)));
+      lab.append(sel);
+    }
+    wrap.append(lab);
+  });
+  wrap.addEventListener("change", () => {
+    OPTIONS.forEach((o) => {
+      const sel = $("room-" + o.id);
+      if (sel) sel.disabled = !$("acc-" + o.id).checked;
+    });
+  });
+}
+function resetForm() {
+  $("form").reset();
+  $("formErr").textContent = "";
+  $("submitBtn").disabled = false;
+  OPTIONS.forEach((o) => { const s = $("room-" + o.id); if (s) s.disabled = true; });
+}
+
+// ---- screens ----
+function show(which) {
+  if (which === shown) return;
+  shown = which;
+  ["lobby", "count", "form", "done"].forEach((k) => { $("s-" + k).hidden = k !== which; });
+  if (which === "form") $("email").focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+}
+function running() {
+  return control && control.status === "running" && Date.now() < control.startAt + STALE_MS;
+}
+function tick() {
+  if (!running()) { show("lobby"); return; }
+  if (control.round !== curRound) {
+    curRound = control.round;
+    submitted = results.some((r) => r.round === curRound && r.uid === uid);
+    resetForm();
+    setReady(false);
+  }
+  const left = control.startAt - Date.now();
+  if (left > 0) {
+    show("count");
+    $("countNum").textContent = Math.ceil(left / 1000);
+  } else if (submitted) {
+    show("done");
+  } else {
+    show("form");
+    $("liveTime").textContent = fmt(-left);
+  }
+}
+
+// ---- lobby ----
+function setReady(v) {
+  ready = v;
+  $("readyBtn").textContent = v ? "Not ready" : "I'm ready";
+  $("readyBtn").className = v ? "ghost" : "";
+  pushPresence();
+}
+function pushPresence() {
+  if (room) room.presence({ name: name || "Anonymous", ready }).catch(() => {});
+}
+function renderPeers() {
+  const list = $("peers");
+  list.textContent = "";
+  const ps = room ? room.peers().filter((p) => p.kind === "viewer") : [];
+  if (!ps.length) {
+    const li = document.createElement("li");
+    const n = document.createElement("span"); n.className = "nm"; n.textContent = (name || "You") + " (you)";
+    const b = document.createElement("span"); b.className = "pill" + (ready ? " on" : ""); b.textContent = ready ? "Ready" : "Not ready";
+    li.append(n, b); list.append(li);
+    $("peerHead").textContent = "In the room";
+    return;
+  }
+  let rc = 0;
+  ps.forEach((p) => {
+    const on = !!p.presence.ready; if (on) rc++;
+    const li = document.createElement("li");
+    const n = document.createElement("span"); n.className = "nm";
+    n.textContent = String(p.presence.name || "Anonymous").slice(0, 40) + (p.sameTab ? " (you)" : "");
+    const b = document.createElement("span"); b.className = "pill" + (on ? " on" : ""); b.textContent = on ? "Ready" : "Not ready";
+    li.append(n, b); list.append(li);
+  });
+  $("peerHead").textContent = "In the room · " + rc + " of " + ps.length + " ready";
+}
+
+// ---- leaderboard ----
+function rowsFor(tab) {
+  if (tab === "round") {
+    return results.filter((r) => control && r.round === control.round).sort((a, b) => a.ms - b.ms);
+  }
+  const best = new Map();
+  results.forEach((r) => { const c = best.get(r.uid); if (!c || r.ms < c.ms) best.set(r.uid, r); });
+  return [...best.values()].sort((a, b) => a.ms - b.ms);
+}
+function renderBoard(where) {
+  const rows = rowsFor(tabs[where]).slice(0, 50);
+  const host = $("board-" + where);
+  host.textContent = "";
+  if (!rows.length) {
+    const p = document.createElement("p"); p.className = "muted";
+    p.textContent = tabs[where] === "round" ? "No times logged this round yet." : "No times logged yet.";
+    host.append(p); return;
+  }
+  const t = document.createElement("table");
+  const hd = t.createTHead().insertRow();
+  ["#", "Name", "Time"].forEach((h) => { const th = document.createElement("th"); th.textContent = h; hd.append(th); });
+  const tb = t.createTBody();
+  rows.forEach((r, i) => {
+    const tr = tb.insertRow();
+    if (r.uid === uid) tr.className = "me";
+    tr.insertCell().textContent = i + 1;
+    tr.insertCell().textContent = String(r.name || "Anonymous").slice(0, 40);
+    const c = tr.insertCell(); c.className = "t"; c.textContent = fmt(r.ms);
+  });
+  host.append(t);
+}
+function renderAll() {
+  renderBoard("lobby"); renderBoard("done");
+  if (control && curRound !== null) {
+    const mine = results.find((r) => r.round === control.round && r.uid === uid);
+    if (mine) {
+      const rank = rowsFor("round").findIndex((r) => r.uid === uid) + 1;
+      $("myRank").textContent = "Rank " + rank + " of " + rowsFor("round").length + " so far this round";
+    }
+  }
+}
+
+// ---- submit ----
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!running() || submitted) return;
+  const ms = Math.max(0, Date.now() - control.startAt);
+  const err = $("formErr");
+  const email = $("email").value.trim();
+  const names = $("names").value.trim();
+  const picked = OPTIONS.find((o) => $("acc-" + o.id).checked);
+  if (!/^\S+@\S+\.\S+$/.test(email)) { err.textContent = "Enter a valid email."; return; }
+  if (!names) { err.textContent = "List the full names of everyone staying with you."; return; }
+  if (!picked) { err.textContent = "Select an accommodation."; return; }
+  const room_ = picked.rooms ? $("room-" + picked.id).value : "";
+  if (picked.rooms && !room_) { err.textContent = "Select a room for " + picked.t + "."; return; }
+  err.textContent = "";
+  $("submitBtn").disabled = true;
+  submitted = true;
+  $("myTime").textContent = fmt(ms);
+  $("saveErr").textContent = "";
+  show("done");
+  if (!uid) { uid = store.get("fs-guest") || "g" + Math.random().toString(36).slice(2, 10); store.set("fs-guest", uid); }
+  if (db) {
+    try {
+      await db.doc("results/" + control.round + "_" + uid).set({
+        round: control.round, uid, name: name || "Anonymous", ms, option: picked.t + (room_ ? " / " + room_ : ""), at: Date.now(),
+      });
+    } catch (x) {
+      $("saveErr").textContent = "Your time was not saved to the leaderboard. You need Contributor access to log times.";
+    }
+  } else {
+    $("saveErr").textContent = "Live sync is unavailable here, so this time is not on the shared leaderboard.";
+  }
+});
+
+// ---- host ----
+$("startBtn").addEventListener("click", async () => {
+  const err = $("hostErr");
+  err.textContent = "";
+  try {
+    if ((await sha($("pw").value)) !== PW_HASH) { err.textContent = "Wrong password."; return; }
+    $("pw").value = "";
+    await db.doc("race/control").set({
+      round: ((control && control.round) || 0) + 1, status: "running", startAt: Date.now() + LEAD_MS,
+    });
+  } catch (x) { err.textContent = "Could not start the round. Check that you are signed in as the owner or an editor."; }
+});
+
+// ---- wiring ----
+$("nick").value = name;
+$("nick").addEventListener("input", (e) => { name = e.target.value.trim(); store.set("fs-name", name); pushPresence(); renderPeers(); });
+$("readyBtn").addEventListener("click", () => { setReady(!ready); renderPeers(); });
+document.querySelectorAll(".tabs").forEach((box) => box.addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-tab]"); if (!b) return;
+  const w = box.dataset.board; tabs[w] = b.dataset.tab;
+  box.querySelectorAll("button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  renderBoard(w);
+}));
+
+buildCards();
+renderPeers(); renderAll();
+setInterval(tick, 50);
+
+(async function boot() {
+  const use = window.claude && window.claude.use ? (n) => window.claude.use(n) : () => Promise.resolve(null);
+  [db, room, user] = await Promise.all([use("db"), use("room"), use("user")]);
+  if (user) {
+    try {
+      const me = await user.me();
+      uid = me.id;
+      if (!name && me.name) { name = me.name; $("nick").value = name; }
+      isHost = await user.canEdit();
+    } catch (e) {}
+  }
+  $("hostPanel").hidden = !isHost || !db;
+  if (!db) $("syncNote").textContent = "Live sync is off in this view, so nothing is shared.";
+  if (room) {
+    room.onPeers(renderPeers);
+    pushPresence();
+  }
+  if (db) {
+    db.doc("race/control").onSnapshot((s) => { control = s.exists ? s.data() : null; renderAll(); tick(); }, () => {});
+    db.collection("results").limit(1000).onSnapshot((s) => {
+      results = s.docs.map((d) => d.data()).filter((r) => r && typeof r.ms === "number");
+      if (control && curRound === control.round && !submitted && results.some((r) => r.round === curRound && r.uid === uid)) submitted = true;
+      renderAll();
+    }, () => {});
+  }
+})();
+</script>
+
+</body></html>
