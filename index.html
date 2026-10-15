@@ -1,9 +1,12 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Form Sprint</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* Layout: one centered column; lobby -> countdown -> form -> result, one screen visible at a time. Deliberately a single dark look (timing-board feel). */
+/* Layout: one centered column; lobby -> countdown -> form -> result, one screen visible at a time. Single dark look (timing-board feel). */
 :root {
   --bg: #0d1014;
   --panel: #151a20;
@@ -21,7 +24,7 @@
 }
 * { box-sizing: border-box; }
 body {
-  background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
+  margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 var(--body);
   padding-block: 0 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -36,7 +39,6 @@ h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spac
 h1 { font-size: clamp(26px, 5vw, 38px); }
 h2 { font-size: 20px; }
 .muted { color: var(--muted); }
-.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .eyebrow { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
 .screen { padding-top: 28px; display: grid; gap: 20px; }
@@ -62,21 +64,18 @@ label.field { display: grid; gap: 6px; font-weight: 600; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .row > .grow { flex: 1 1 200px; min-width: 0; }
 
-/* lobby */
 .peers { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
 .peers li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 6px; }
 .peers .nm { min-width: 0; overflow-wrap: anywhere; }
 .pill { font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; align-self: center; }
 .pill.on { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
 
-/* countdown + timer */
 .count { text-align: center; padding: 56px 16px; }
 .count .num { font: 700 clamp(110px, 30vw, 240px)/1 var(--display); color: var(--warn); font-variant-numeric: tabular-nums; }
 .clock { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; justify-content: space-between; gap: 12px; align-items: center;
   background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; }
-.clock .t { font: 500 26px var(--mono); color: var(--accent); }
+.clock .t { font: 500 26px var(--mono); color: var(--accent); font-variant-numeric: tabular-nums; }
 
-/* form */
 .formcard { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: clamp(16px, 4vw, 32px); display: grid; gap: 22px; }
 .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
 .card { display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-content: start; border: 1px solid var(--line); border-radius: 6px; padding: 12px; cursor: pointer; background: #0f1318; }
@@ -89,7 +88,6 @@ label.field { display: grid; gap: 6px; font-weight: 600; }
 .err { color: var(--bad); font-weight: 500; min-height: 1.4em; }
 .submit { justify-self: center; font-size: 17px; padding: 14px 44px; background: #eceff3; color: #111; }
 
-/* result + board */
 .big { font: 700 clamp(48px, 13vw, 96px)/1 var(--display); color: var(--accent); font-variant-numeric: tabular-nums; }
 .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
 .tabs button { padding: 6px 14px; font-size: 13px; background: transparent; color: var(--muted); border: 1px solid var(--line); }
@@ -102,9 +100,9 @@ th:last-child { text-align: right; }
 tr.me td { color: var(--accent); font-weight: 600; }
 .boardwrap { overflow-x: auto; }
 .note { font-size: 13px; color: var(--muted); }
-@media (prefers-reduced-motion: no-preference) { .count .num { transition: transform .15s; } }
 </style>
-
+</head>
+<body>
 <div class="practice">PRACTICE FORM · nothing you enter here is sent to any real registration</div>
 <div class="wrap">
 
@@ -113,6 +111,10 @@ tr.me td { color: var(--accent); font-weight: 600; }
     <div>
       <div class="eyebrow">Form Sprint</div>
       <h1>Ready up. When the host starts, everyone gets the form at the same instant.</h1>
+    </div>
+    <div class="panel" id="setupMsg" hidden>
+      <h2>Setup needed</h2>
+      <p class="muted" style="margin:6px 0 0">Paste your Firebase config into <code>index.html</code> (see README.md). Until then nothing is shared between players.</p>
     </div>
     <div class="cols">
       <div class="panel col">
@@ -130,16 +132,18 @@ tr.me td { color: var(--accent); font-weight: 600; }
         <ul class="peers" id="peers"></ul>
       </div>
     </div>
-    <div class="row"><button type="button" class="ghost" id="hostToggle" hidden>Host controls</button></div>
+
     <div class="panel" id="hostPanel" hidden>
       <h2>Host controls</h2>
-      <p class="muted" style="margin:6px 0 14px">Enter the host password to start a 5-second countdown for everyone in the room.</p>
+      <p class="muted" style="margin:6px 0 14px">Starts a 5-second countdown for everyone in the room.</p>
       <div class="row">
-        <div class="grow"><input type="password" id="pw" autocomplete="off" aria-label="Host password" placeholder="Host password"></div>
         <button id="startBtn">Start countdown</button>
+        <button id="resetBtn" class="ghost">Back to lobby</button>
+        <button id="outBtn" class="ghost">Sign out host</button>
       </div>
       <div class="err" id="hostErr" role="alert"></div>
     </div>
+
     <div class="panel col" id="lobbyBoardPanel">
       <h2 style="margin-bottom:12px">Leaderboard</h2>
       <div class="tabs" data-board="lobby">
@@ -148,7 +152,19 @@ tr.me td { color: var(--accent); font-weight: 600; }
       </div>
       <div class="boardwrap" id="board-lobby"></div>
     </div>
-    <p class="note">Times run from the countdown's zero to your Submit, measured on each device's own clock. Keep your device on automatic time.</p>
+
+    <div id="hostLoginBox" hidden>
+      <button type="button" class="ghost" id="hostLoginToggle">Host login</button>
+      <div class="panel" id="hostLoginForm" hidden style="margin-top:12px">
+        <div class="row">
+          <div class="grow"><input type="email" id="hostEmail" autocomplete="username" aria-label="Host email" placeholder="Host email"></div>
+          <div class="grow"><input type="password" id="hostPw" autocomplete="current-password" aria-label="Host password" placeholder="Host password"></div>
+          <button type="button" id="hostGo">Sign in</button>
+        </div>
+        <div class="err" id="loginErr" role="alert"></div>
+      </div>
+    </div>
+    <p class="note">Times are measured against the server's clock, so a player's device clock being off does not change the result.</p>
   </section>
 
   <!-- COUNTDOWN -->
@@ -161,7 +177,7 @@ tr.me td { color: var(--accent); font-weight: 600; }
 
   <!-- FORM -->
   <section id="s-form" hidden>
-    <div class="clock"><span class="eyebrow">Go. Fill it in and submit.</span><span class="t" id="liveTime">0.00</span></div>
+    <div class="clock"><span class="eyebrow">Go. Fill it in and submit.</span><span class="t" id="liveTime">0.00s</span></div>
     <div class="screen">
       <form class="formcard" id="form" novalidate>
         <div style="text-align:center">
@@ -201,13 +217,23 @@ tr.me td { color: var(--accent); font-weight: 600; }
       </div>
       <div class="boardwrap" id="board-done"></div>
     </div>
-    <p class="note" id="waitNote">Waiting for the host to start another round.</p>
+    <p class="note">Waiting for the host to start another round.</p>
   </section>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script>
-// shortcut: the host password is checked in the browser against this hash, so it only keeps out casual clicks; real control comes from the db rule that only Editors/Owner can write race/control.
-const PW_HASH = "50029220a560061fbfd1b7eb0eb71524b7eb6c49861d96dd67c43d4e2083676c";
+// Paste the config from Firebase console > Project settings > Your apps > Web app.
+// These values are public by design; database.rules.json is what protects the data.
+const FIREBASE_CONFIG = {
+  apiKey: "PASTE_API_KEY",
+  authDomain: "PASTE_PROJECT.firebaseapp.com",
+  databaseURL: "https://PASTE_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "PASTE_PROJECT",
+  appId: "PASTE_APP_ID",
+};
 const LEAD_MS = 5000;
 const STALE_MS = 20 * 60 * 1000;
 
@@ -233,30 +259,24 @@ const store = {
   get(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } },
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
 };
-
-let db = null, room = null, user = null;
-let uid = null, isHost = false;
-let control = null;        // {round, status, startAt}
-let results = [];          // all result docs
-let ready = false;
-let name = store.get("fs-name");
-let curRound = null;       // round the form is currently built for
-let submitted = false;
-let shown = "";
-const tabs = { lobby: "round", done: "round" };
-
 const fmt = (ms) => ms >= 60000
   ? Math.floor(ms / 60000) + ":" + ((ms % 60000) / 1000).toFixed(2).padStart(5, "0")
   : (ms / 1000).toFixed(2) + "s";
-const sha = async (s) => {
-  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
-  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
-};
 
-// ---- form build ----
+let rtdb = null, auth = null;
+let uid = null, isHost = false, offset = 0;
+let control = null;        // {round, status, startAt} in server time
+let results = [];          // [{round, uid, name, ms}]
+let peers = [];            // [{id, name, ready}]
+let ready = false;
+let name = store.get("fs-name");
+let curRound = null, submitted = false, shown = "";
+const tabs = { lobby: "round", done: "round" };
+const now = () => Date.now() + offset;   // server-corrected clock
+
+// ---- form ----
 function buildCards() {
   const wrap = $("cards");
-  wrap.textContent = "";
   OPTIONS.forEach((o) => {
     const lab = document.createElement("label");
     lab.className = "card";
@@ -277,12 +297,10 @@ function buildCards() {
     }
     wrap.append(lab);
   });
-  wrap.addEventListener("change", () => {
-    OPTIONS.forEach((o) => {
-      const sel = $("room-" + o.id);
-      if (sel) sel.disabled = !$("acc-" + o.id).checked;
-    });
-  });
+  wrap.addEventListener("change", () => OPTIONS.forEach((o) => {
+    const sel = $("room-" + o.id);
+    if (sel) sel.disabled = !$("acc-" + o.id).checked;
+  }));
 }
 function resetForm() {
   $("form").reset();
@@ -300,7 +318,7 @@ function show(which) {
   window.scrollTo(0, 0);
 }
 function running() {
-  return control && control.status === "running" && Date.now() < control.startAt + STALE_MS;
+  return control && control.status === "running" && now() < control.startAt + STALE_MS;
 }
 function tick() {
   if (!running()) { show("lobby"); return; }
@@ -310,7 +328,7 @@ function tick() {
     resetForm();
     setReady(false);
   }
-  const left = control.startAt - Date.now();
+  const left = control.startAt - now();
   if (left > 0) {
     show("count");
     $("countNum").textContent = Math.ceil(left / 1000);
@@ -328,29 +346,22 @@ function setReady(v) {
   $("readyBtn").textContent = v ? "Not ready" : "I'm ready";
   $("readyBtn").className = v ? "ghost" : "";
   pushPresence();
+  renderPeers();
 }
 function pushPresence() {
-  if (room) room.presence({ name: name || "Anonymous", ready }).catch(() => {});
+  if (rtdb && uid) rtdb.ref("presence/" + uid).set({ name: (name || "Anonymous").slice(0, 40), ready }).catch(() => {});
 }
 function renderPeers() {
   const list = $("peers");
   list.textContent = "";
-  const ps = room ? room.peers().filter((p) => p.kind === "viewer") : [];
-  if (!ps.length) {
-    const li = document.createElement("li");
-    const n = document.createElement("span"); n.className = "nm"; n.textContent = (name || "You") + " (you)";
-    const b = document.createElement("span"); b.className = "pill" + (ready ? " on" : ""); b.textContent = ready ? "Ready" : "Not ready";
-    li.append(n, b); list.append(li);
-    $("peerHead").textContent = "In the room";
-    return;
-  }
+  const ps = peers.length ? peers : [{ id: uid, name: name || "You", ready }];
   let rc = 0;
   ps.forEach((p) => {
-    const on = !!p.presence.ready; if (on) rc++;
+    if (p.ready) rc++;
     const li = document.createElement("li");
     const n = document.createElement("span"); n.className = "nm";
-    n.textContent = String(p.presence.name || "Anonymous").slice(0, 40) + (p.sameTab ? " (you)" : "");
-    const b = document.createElement("span"); b.className = "pill" + (on ? " on" : ""); b.textContent = on ? "Ready" : "Not ready";
+    n.textContent = String(p.name || "Anonymous").slice(0, 40) + (p.id === uid ? " (you)" : "");
+    const b = document.createElement("span"); b.className = "pill" + (p.ready ? " on" : ""); b.textContent = p.ready ? "Ready" : "Not ready";
     li.append(n, b); list.append(li);
   });
   $("peerHead").textContent = "In the room · " + rc + " of " + ps.length + " ready";
@@ -358,9 +369,7 @@ function renderPeers() {
 
 // ---- leaderboard ----
 function rowsFor(tab) {
-  if (tab === "round") {
-    return results.filter((r) => control && r.round === control.round).sort((a, b) => a.ms - b.ms);
-  }
+  if (tab === "round") return results.filter((r) => control && r.round === control.round).sort((a, b) => a.ms - b.ms);
   const best = new Map();
   results.forEach((r) => { const c = best.get(r.uid); if (!c || r.ms < c.ms) best.set(r.uid, r); });
   return [...best.values()].sort((a, b) => a.ms - b.ms);
@@ -389,12 +398,9 @@ function renderBoard(where) {
 }
 function renderAll() {
   renderBoard("lobby"); renderBoard("done");
-  if (control && curRound !== null) {
-    const mine = results.find((r) => r.round === control.round && r.uid === uid);
-    if (mine) {
-      const rank = rowsFor("round").findIndex((r) => r.uid === uid) + 1;
-      $("myRank").textContent = "Rank " + rank + " of " + rowsFor("round").length + " so far this round";
-    }
+  if (control && results.some((r) => r.round === control.round && r.uid === uid)) {
+    const rows = rowsFor("round");
+    $("myRank").textContent = "Rank " + (rows.findIndex((r) => r.uid === uid) + 1) + " of " + rows.length + " so far this round";
   }
 }
 
@@ -402,53 +408,53 @@ function renderAll() {
 $("form").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!running() || submitted) return;
-  const ms = Math.max(0, Date.now() - control.startAt);
+  const ms = Math.max(0, now() - control.startAt);
   const err = $("formErr");
-  const email = $("email").value.trim();
-  const names = $("names").value.trim();
   const picked = OPTIONS.find((o) => $("acc-" + o.id).checked);
-  if (!/^\S+@\S+\.\S+$/.test(email)) { err.textContent = "Enter a valid email."; return; }
-  if (!names) { err.textContent = "List the full names of everyone staying with you."; return; }
+  if (!/^\S+@\S+\.\S+$/.test($("email").value.trim())) { err.textContent = "Enter a valid email."; return; }
+  if (!$("names").value.trim()) { err.textContent = "List the full names of everyone staying with you."; return; }
   if (!picked) { err.textContent = "Select an accommodation."; return; }
-  const room_ = picked.rooms ? $("room-" + picked.id).value : "";
-  if (picked.rooms && !room_) { err.textContent = "Select a room for " + picked.t + "."; return; }
+  const roomPick = picked.rooms ? $("room-" + picked.id).value : "";
+  if (picked.rooms && !roomPick) { err.textContent = "Select a room for " + picked.t + "."; return; }
   err.textContent = "";
   $("submitBtn").disabled = true;
   submitted = true;
   $("myTime").textContent = fmt(ms);
   $("saveErr").textContent = "";
   show("done");
-  if (!uid) { uid = store.get("fs-guest") || "g" + Math.random().toString(36).slice(2, 10); store.set("fs-guest", uid); }
-  if (db) {
-    try {
-      await db.doc("results/" + control.round + "_" + uid).set({
-        round: control.round, uid, name: name || "Anonymous", ms, option: picked.t + (room_ ? " / " + room_ : ""), at: Date.now(),
-      });
-    } catch (x) {
-      $("saveErr").textContent = "Your time was not saved to the leaderboard. You need Contributor access to log times.";
-    }
-  } else {
-    $("saveErr").textContent = "Live sync is unavailable here, so this time is not on the shared leaderboard.";
+  if (!rtdb) { $("saveErr").textContent = "Not connected, so this time is not on the shared leaderboard."; return; }
+  try {
+    await rtdb.ref("results/" + control.round + "/" + uid).set({
+      name: (name || "Anonymous").slice(0, 40), ms, option: picked.t + (roomPick ? " / " + roomPick : ""),
+      at: firebase.database.ServerValue.TIMESTAMP,
+    });
+  } catch (x) {
+    $("saveErr").textContent = "Your time was not saved to the leaderboard (" + (x.code || "error") + ").";
   }
 });
 
 // ---- host ----
-$("startBtn").addEventListener("click", async () => {
-  const err = $("hostErr");
-  err.textContent = "";
+$("startBtn").addEventListener("click", () => {
+  $("hostErr").textContent = "";
+  rtdb.ref("control").set({ round: ((control && control.round) || 0) + 1, status: "running", startAt: now() + LEAD_MS })
+    .catch((x) => { $("hostErr").textContent = "Could not start (" + (x.code || "error") + "). Is this the host account from the rules?"; });
+});
+$("resetBtn").addEventListener("click", () => {
+  rtdb.ref("control").set({ round: (control && control.round) || 0, status: "idle", startAt: 0 }).catch(() => {});
+});
+$("outBtn").addEventListener("click", () => auth.signOut().then(() => location.reload()));
+$("hostLoginToggle").addEventListener("click", () => { $("hostLoginForm").hidden = !$("hostLoginForm").hidden; });
+$("hostGo").addEventListener("click", async () => {
   try {
-    if ((await sha($("pw").value)) !== PW_HASH) { err.textContent = "Wrong password."; return; }
-    $("pw").value = "";
-    await db.doc("race/control").set({
-      round: ((control && control.round) || 0) + 1, status: "running", startAt: Date.now() + LEAD_MS,
-    });
-  } catch (x) { err.textContent = "Could not start the round. Check that you are signed in as the owner or an editor."; }
+    await auth.signInWithEmailAndPassword($("hostEmail").value.trim(), $("hostPw").value);
+    location.reload();
+  } catch (x) { $("loginErr").textContent = "Login failed (" + (x.code || "error") + ")."; }
 });
 
 // ---- wiring ----
 $("nick").value = name;
 $("nick").addEventListener("input", (e) => { name = e.target.value.trim(); store.set("fs-name", name); pushPresence(); renderPeers(); });
-$("readyBtn").addEventListener("click", () => { setReady(!ready); renderPeers(); });
+$("readyBtn").addEventListener("click", () => setReady(!ready));
 document.querySelectorAll(".tabs").forEach((box) => box.addEventListener("click", (e) => {
   const b = e.target.closest("button[data-tab]"); if (!b) return;
   const w = box.dataset.board; tabs[w] = b.dataset.tab;
@@ -456,38 +462,47 @@ document.querySelectorAll(".tabs").forEach((box) => box.addEventListener("click"
   renderBoard(w);
 }));
 
+function connect(user) {
+  uid = user.uid;
+  isHost = !user.isAnonymous;
+  $("hostPanel").hidden = !isHost;
+  $("hostLoginBox").hidden = isHost;
+  rtdb.ref(".info/serverTimeOffset").on("value", (s) => { offset = s.val() || 0; });
+  rtdb.ref(".info/connected").on("value", (s) => {
+    if (!s.val()) return;
+    rtdb.ref("presence/" + uid).onDisconnect().remove();
+    pushPresence();
+  });
+  rtdb.ref("presence").on("value", (s) => {
+    peers = Object.entries(s.val() || {}).map(([id, v]) => ({ id, name: v.name, ready: !!v.ready }));
+    renderPeers();
+  });
+  rtdb.ref("control").on("value", (s) => { control = s.val(); renderAll(); tick(); });
+  rtdb.ref("results").on("value", (s) => {
+    results = [];
+    Object.entries(s.val() || {}).forEach(([round, byUid]) => Object.entries(byUid).forEach(([u, r]) => {
+      if (r && typeof r.ms === "number") results.push({ round: Number(round), uid: u, name: r.name, ms: r.ms });
+    }));
+    if (control && curRound === control.round && results.some((r) => r.round === curRound && r.uid === uid)) submitted = true;
+    renderAll();
+  });
+}
+
 buildCards();
 renderPeers(); renderAll();
 setInterval(tick, 50);
 
-(async function boot() {
-  const use = window.claude && window.claude.use ? (n) => window.claude.use(n) : () => Promise.resolve(null);
-  [db, room, user] = await Promise.all([use("db"), use("room"), use("user")]);
-  if (user) {
-    try {
-      const me = await user.me();
-      uid = me.id;
-      if (!name && me.name) { name = me.name; $("nick").value = name; }
-      isHost = await user.canEdit();
-    } catch (e) {}
-  }
-  // The panel stays closed until a host opens it; only owner/Editor accounts get the button at all.
-  $("hostToggle").hidden = !isHost || !db;
-  $("hostToggle").addEventListener("click", () => { $("hostPanel").hidden = !$("hostPanel").hidden; });
-  if (!db) $("syncNote").textContent = "Live sync is off in this view, so nothing is shared.";
-  if (room) {
-    room.onPeers(renderPeers);
-    pushPresence();
-  }
-  if (db) {
-    db.doc("race/control").onSnapshot((s) => { control = s.exists ? s.data() : null; renderAll(); tick(); }, () => {});
-    db.collection("results").limit(1000).onSnapshot((s) => {
-      results = s.docs.map((d) => d.data()).filter((r) => r && typeof r.ms === "number");
-      if (control && curRound === control.round && !submitted && results.some((r) => r.round === curRound && r.uid === uid)) submitted = true;
-      renderAll();
-    }, () => {});
-  }
-})();
+if (FIREBASE_CONFIG.apiKey.startsWith("PASTE")) {
+  $("setupMsg").hidden = false;
+} else {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth();
+  rtdb = firebase.database();
+  auth.onAuthStateChanged((u) => {
+    if (u) { if (!uid) connect(u); }
+    else auth.signInAnonymously().catch((x) => { $("syncNote").textContent = "Could not connect (" + (x.code || "error") + ")."; });
+  });
+}
 </script>
-
-</body></html>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "control": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.email === 'HOST_EMAIL_HERE'",
+      ".validate": "newData.hasChildren(['round', 'status', 'startAt'])"
+    },
+    "presence": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['name', 'ready']) && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('ready').isBoolean()"
+      }
+    },
+    "results": {
+      ".read": "auth != null",
+      "$round": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.hasChildren(['name', 'ms', 'at']) && newData.child('name').isString() && newData.child('name').val().length <= 40 && newData.child('ms').isNumber() && newData.child('ms').val() >= 0 && newData.child('ms').val() >= now - root.child('control/startAt').val() - 3000"
+        }
+      }
+    }
+  }
+}
