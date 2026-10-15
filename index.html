@@ -138,6 +138,9 @@ tr.me td { color: var(--accent); font-weight: 600; }
     <div class="panel" id="hostPanel" hidden>
       <h2>Host controls</h2>
       <p class="muted" style="margin:6px 0 14px">Starts a 5-second countdown for everyone in the room.</p>
+      <div class="row" style="margin-bottom:12px">
+        <div class="grow"><input type="text" id="roundPw" autocomplete="off" aria-label="Form password for this round" placeholder="Form password (leave empty for none)" value="sprint"></div>
+      </div>
       <div class="row">
         <button id="startBtn">Start countdown</button>
         <button id="resetBtn" class="ghost">Back to lobby</button>
@@ -181,9 +184,31 @@ tr.me td { color: var(--accent); font-weight: 600; }
     </div>
   </section>
 
+  <!-- PASSWORD GATE: shown after the countdown; the clock is already running -->
+  <style>
+    .gate { max-width: 460px; margin: 48px auto 0; text-align: center; display: grid; gap: 14px; justify-items: center; }
+    .gate .pwbox { display: flex; gap: 8px; width: 100%; }
+    .gate .pwbox input { flex: 1; min-width: 0; }
+    .gate .go { min-width: 180px; }
+  </style>
+  <section class="screen" id="s-gate" hidden>
+    <form class="panel gate" id="gateForm" novalidate>
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="muted" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+      <h2>This form is password protected.</h2>
+      <p class="muted" style="margin:0">Please enter the password to view and fill out this form.</p>
+      <div class="pwbox">
+        <input type="password" id="gatePw" autocomplete="off" aria-label="Form password" placeholder="Enter form password">
+        <button type="button" class="ghost" id="gateEye">Show</button>
+      </div>
+      <div class="err" id="gateErr" role="alert"></div>
+      <button type="submit" class="go">Continue</button>
+      <p class="note" style="margin:0">Practice form. Your time keeps running while you enter the password.</p>
+    </form>
+  </section>
+
   <!-- FORM -->
   <section id="s-form" hidden>
-    <div class="clock"><span class="eyebrow">Go. Fill it in and complete</span><span class="t" id="liveTime">0.00s</span></div>
+    <div class="clock"><span class="eyebrow">Go. Fill it in and submit.</span><span class="t" id="liveTime">0.00s</span></div>
     <div class="screen">
       <form class="formcard" id="form" novalidate>
         <div style="text-align:center">
@@ -275,6 +300,10 @@ const store = {
 const fmt = (ms) => ms >= 60000
   ? Math.floor(ms / 60000) + ":" + ((ms % 60000) / 1000).toFixed(2).padStart(5, "0")
   : (ms / 1000).toFixed(2) + "s";
+const sha = async (s) => {
+  const b = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s));
+  return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("");
+};
 
 let rtdb = null, auth = null;
 let uid = null, isHost = false, offset = 0;
@@ -283,7 +312,7 @@ let results = [];          // [{round, uid, name, ms}]
 let peers = [];            // [{id, name, ready}]
 let ready = false;
 let name = store.get("fs-name");
-let curRound = null, submitted = false, shown = "";
+let curRound = null, submitted = false, unlocked = false, shown = "";
 const tabs = { lobby: "round", done: "round" };
 const now = () => Date.now() + offset;   // server-corrected clock
 
@@ -319,6 +348,7 @@ function resetForm() {
   $("form").reset();
   $("formErr").textContent = "";
   $("submitBtn").disabled = false;
+  $("gatePw").value = ""; $("gateErr").textContent = "";
   OPTIONS.forEach((o) => { const s = $("room-" + o.id); if (s) s.disabled = true; });
 }
 
@@ -326,7 +356,8 @@ function resetForm() {
 function show(which) {
   if (which === shown) return;
   shown = which;
-  ["lobby", "count", "form", "done"].forEach((k) => { $("s-" + k).hidden = k !== which; });
+  ["lobby", "count", "gate", "form", "done"].forEach((k) => { $("s-" + k).hidden = k !== which; });
+  if (which === "gate") $("gatePw").focus({ preventScroll: true });
   if (which === "form") $("email").focus({ preventScroll: true });
   window.scrollTo(0, 0);
 }
@@ -339,6 +370,7 @@ function tick() {
     curRound = control.round;
     submitted = results.some((r) => r.round === curRound && r.uid === uid);
     resetForm();
+    unlocked = !control.pwHash;   // no password set by the host means no gate
     setReady(false);
   }
   const left = control.startAt - now();
@@ -347,6 +379,8 @@ function tick() {
     $("countNum").textContent = Math.ceil(left / 1000);
   } else if (submitted) {
     show("done");
+  } else if (!unlocked) {
+    show("gate");
   } else {
     show("form");
     $("liveTime").textContent = fmt(-left);
@@ -454,10 +488,27 @@ $("form").addEventListener("submit", async (e) => {
 });
 
 // ---- host ----
-$("startBtn").addEventListener("click", () => {
+$("startBtn").addEventListener("click", async () => {
   $("hostErr").textContent = "";
-  rtdb.ref("control").set({ round: ((control && control.round) || 0) + 1, status: "running", startAt: now() + LEAD_MS })
-    .catch((x) => { $("hostErr").textContent = "Could not start (" + (x.code || "error") + "). Is this the host account from the rules?"; });
+  try {
+    const pw = $("roundPw").value.trim();
+    await rtdb.ref("control").set({
+      round: ((control && control.round) || 0) + 1, status: "running", startAt: now() + LEAD_MS,
+      pwHash: pw ? await sha(pw) : "",   // only the hash is stored; tell players the password yourself
+    });
+  } catch (x) { $("hostErr").textContent = "Could not start (" + (x.code || "error") + "). Is this the host account from the rules?"; }
+});
+// Password gate: wrong tries cost time because the clock started at the countdown's zero.
+$("gateForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!running() || !control.pwHash) return;
+  if ((await sha($("gatePw").value.trim())) === control.pwHash) { unlocked = true; tick(); }
+  else { $("gateErr").textContent = "Wrong password. Try again."; $("gatePw").select(); }
+});
+$("gateEye").addEventListener("click", () => {
+  const p = $("gatePw"), on = p.type === "password";
+  p.type = on ? "text" : "password";
+  $("gateEye").textContent = on ? "Hide" : "Show";
 });
 $("resetBtn").addEventListener("click", () => {
   rtdb.ref("control").set({ round: (control && control.round) || 0, status: "idle", startAt: 0 }).catch(() => {});
